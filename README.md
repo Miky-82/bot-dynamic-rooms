@@ -11,12 +11,6 @@ On‑premise installations (local usage)
 Server / Cloud‑based environments with mobile device integration
 The project is modular and built to scale from a single‑developer setup to a multi‑team architecture.
 
-Architecture
-app-core: shared business logic and domain models
-app-onprem: local deployment and integrations
-app-server: backend services, APIs, and cloud infrastructure
-app-mobile: mobile client application
-Usage
 This repository is currently private and under active development.
 
 No part of this software may be redistributed or commercialized without explicit permission.
