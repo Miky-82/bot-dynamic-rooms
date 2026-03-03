@@ -1,0 +1,12 @@
+{
+  "guildId": "ID_DEL_TUO_SERVER",
+  "categoryName": "STANZE DINAMICHE",
+  "triggerChannels": {
+    "public": "➕ Pubblica",
+    "live": "🔴 Live",
+    "private": "🔒 Privata"
+  },
+  "privateRoleName": "VIP",
+  "liveRoleName": "Streamer",
+  "utenteRoleName": "User"
+}
