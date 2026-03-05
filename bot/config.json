@@ -1,12 +1,36 @@
 {
-  "guildId": "ID_DEL_TUO_SERVER",
-  "categoryName": "STANZE DINAMICHE",
+  "categories": {
+    "public": "STANZE PUBBLICHE",
+    "live": "STANZE LIVE",
+    "private": "STANZE PRIVATE"
+  },
+
   "triggerChannels": {
     "public": "➕ Pubblica",
     "live": "🔴 Live",
     "private": "🔒 Privata"
   },
-  "privateRoleName": "VIP",
-  "liveRoleName": "Streamer",
-  "utenteRoleName": "User"
+
+  "roles": {
+    "base": "User",
+    "public": "User",
+    "live": "Streamer",
+    "private": "VIP",
+
+    "streamer": "Streamer",
+    "streamer_mod": "Streamer Moderator"
+  },
+
+  "platformRoles": {
+    "twitch_mod": "Twitch Moderator",
+    "kick_mod": "Kick Moderator",
+    "youtube_mod": "YouTube Moderator"
+  },
+
+  "features": {
+    "liveChannelName": true,
+    "streamerPermissions": true
+  },
+
+  "deleteTimer": 60
 }
