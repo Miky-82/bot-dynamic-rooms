@@ -10,7 +10,7 @@ async function voiceStateHandler(oldState, newState, client) {
 
     const guild = newState.guild || oldState.guild;
 
-    const triggerChannelId = "1478101543143211180"; // metti qui l'id della stanza trigger
+    const triggerChannelId = "codice stanza vocale"; // metti qui l'id della stanza trigger
     const categoryName = "🎙️ LIVE ROOMS";
 
     try {
