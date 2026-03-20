@@ -2,11 +2,8 @@ require('dotenv').config();
 const { Client, GatewayIntentBits } = require('discord.js');
 
 const config = require('./config.json');
-const voiceStateHandler = require('./events/voiceStateUpdate');
+const { voiceStateHandler, voiceOwners } = require('./events/voiceStateUpdate');
 const voiceCommand = require('./commands/voiceControl');
-
-// import owner map
-const { voiceOwners } = require('./events/voiceStateUpdate');
 
 const client = new Client({
   intents: [
@@ -15,34 +12,37 @@ const client = new Client({
   ]
 });
 
-// =============================
-// BOT READY
-// =============================
 client.once('clientReady', () => {
   console.log(`🤖 Bot online come ${client.user.tag}`);
 });
 
-// =============================
-// EVENTO VOICE
-// =============================
-client.on('voiceStateUpdate', (oldState, newState) => {
-  voiceStateHandler(oldState, newState, client, config);
+// EVENTO VOICE (con gestione errori)
+client.on('voiceStateUpdate', async (oldState, newState) => {
+  try {
+    await voiceStateHandler(oldState, newState, client, config);
+  } catch (err) {
+    console.error("Errore evento voice:", err);
+  }
 });
 
-// =============================
 // SLASH COMMANDS
-// =============================
 client.on('interactionCreate', async (interaction) => {
 
   if (!interaction.isChatInputCommand()) return;
 
   if (interaction.commandName === "voice") {
-    voiceCommand.execute(interaction, voiceOwners);
+    try {
+      await voiceCommand.execute(interaction, voiceOwners);
+    } catch (err) {
+      console.error("Errore comando voice:", err);
+    }
   }
 
 });
 
-// =============================
-// LOGIN
-// =============================
+// gestione errori globali (IMPORTANTISSIMO)
+process.on('unhandledRejection', err => {
+  console.error("Unhandled promise rejection:", err);
+});
+
 client.login(process.env.TOKEN);

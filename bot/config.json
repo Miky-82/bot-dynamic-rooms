@@ -5,10 +5,31 @@
     "private": "STANZE PRIVATE"
   },
 
-  "triggerChannels": {
-    "public": "➕ Pubblica",
-    "live": "🔴 Live",
-    "private": "🔒 Privata"
+  "triggers": {
+    "➕ Pubblica": {
+      "channelId": "Id della stanza pubblica",
+      "role": "User"
+    },
+    "🔴 Live": {
+      "channelId": "Id della stanza live",
+      "role": "Streamer"
+    },
+    "🔒 Privata": {
+      "channelId": "Id della stanza Privata",
+      "role": "VIP"
+    }
+  },
+  
+  "settings": {
+    "liveUserLimit": 10,
+    "publicUserLimit": 0,
+    "privateUserLimit": 5,
+
+    "deleteTimers": {
+      "live": 60,
+      "private": 30,
+      "public": 120
+    }
   },
 
   "roles": {
@@ -16,9 +37,9 @@
     "public": "User",
     "live": "Streamer",
     "private": "VIP",
-
     "streamer": "Streamer",
-    "streamer_mod": "Streamer Moderator"
+    "streamer_mod": "Streamer Moderator",
+    "discord_mod": "Discord Moderator"
   },
 
   "platformRoles": {
@@ -30,7 +51,5 @@
   "features": {
     "liveChannelName": true,
     "streamerPermissions": true
-  },
-
-  "deleteTimer": 60
+  }
 }
