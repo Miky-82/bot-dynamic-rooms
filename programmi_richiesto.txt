@@ -1,0 +1,5 @@
+Node.js 
+
+Richiede Discord.js v14
+
+Permessi bot: Manage Channels, Move Members

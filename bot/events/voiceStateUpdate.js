@@ -1,24 +1,20 @@
 const { ChannelType, PermissionsBitField } = require("discord.js");
 
 const voiceOwners = new Map();
-const voiceTypes = new Map(); // 👈 salva tipo stanza
+const voiceTypes = new Map();
 const deleteTimers = new Map();
+const cooldown = new Map();
 
 async function voiceStateHandler(oldState, newState, client, config) {
 
-  console.log("Evento voice:", {
-    old: oldState.channelId,
-    new: newState.channelId
-  });
-
   const guild = newState.guild || oldState.guild;
+  const member = newState.member;
 
   try {
 
     // =========================
     // 🗑️ AUTO DELETE
     // =========================
-
     if (oldState.channel && oldState.channel.members.size === 0) {
 
       const oldChannel = oldState.channel;
@@ -53,9 +49,15 @@ async function voiceStateHandler(oldState, newState, client, config) {
     }
 
     // =========================
-    // 🎯 CREAZIONE STANZE
+    // 🚫 COOLDOWN ANTI SPAM
     // =========================
+    if (cooldown.has(member.id)) return;
+    cooldown.set(member.id, true);
+    setTimeout(() => cooldown.delete(member.id), 3000);
 
+    // =========================
+    // 🎯 TRIGGER
+    // =========================
     const trigger = Object.entries(config.triggers).find(
       ([key, value]) => value.channelId === newState.channelId
     );
@@ -63,31 +65,29 @@ async function voiceStateHandler(oldState, newState, client, config) {
     if (!trigger) return;
 
     const [type, data] = trigger;
-    const member = newState.member;
+
+    // evita doppia creazione
+    if (member.voice.channel && voiceOwners.has(member.voice.channel.id)) return;
 
     console.log(`✅ Trigger ${type} attivato`);
 
-    // 🔐 controllo ruolo
+    // =========================
+    // 🔐 RUOLO
+    // =========================
     const role = guild.roles.cache.find(r => r.name === data.role);
-    if (!role || !member.roles.cache.has(role.id)) {
-      console.log("❌ Ruolo non valido");
-      return;
-    }
+    if (!role || !member.roles.cache.has(role.id)) return;
 
-    // 🧠 nome stanza
-    let channelName = `${member.user.username}`;
+    // =========================
+    // 🧠 NOME STANZA
+    // =========================
+    let channelName = member.user.username;
 
-    if (type === "live") {
-      channelName = `🔴 LIVE • ${member.user.username}`;
-    }
+    if (type === "live") channelName = `🔴 LIVE • ${member.user.username}`;
+    if (type === "private") channelName = `🔒 ${member.user.username}`;
 
-    if (type === "private") {
-      channelName = `🔒 ${member.user.username}`;
-    }
-
-    console.log("Nome stanza:", channelName);
-
-    // 📁 categoria
+    // =========================
+    // 📁 CATEGORIA
+    // =========================
     let category = guild.channels.cache.find(
       c => c.name === config.categories[type] && c.type === ChannelType.GuildCategory
     );
@@ -98,76 +98,70 @@ async function voiceStateHandler(oldState, newState, client, config) {
         type: ChannelType.GuildCategory
       });
     }
-// 🔎 ruoli
-const streamerRole = guild.roles.cache.find(r => r.name === "Streamer");
-const streamerModRole = guild.roles.cache.find(r => r.name === "Streamer Moderator");
-const discordModRole = guild.roles.cache.find(r => r.name === "Discord Moderator");
 
-// 🎙️ crea stanza
-const channel = await guild.channels.create({
-  name: channelName,
-  type: ChannelType.GuildVoice,
-  parent: category.id,
-  permissionOverwrites: type === "live" ? [
-    {
-      id: guild.roles.everyone.id,
-      deny: [PermissionsBitField.Flags.Connect]
-    },
-    {
-      id: member.id,
-      allow: [
-        PermissionsBitField.Flags.Connect,
-        PermissionsBitField.Flags.ManageChannels,
-        PermissionsBitField.Flags.MoveMembers
+    // =========================
+    // 🔎 RUOLI SPECIALI
+    // =========================
+    const streamerRole = guild.roles.cache.find(r => r.name === config.roles.streamer);
+    const streamerModRole = guild.roles.cache.find(r => r.name === config.roles.streamer_mod);
+    const discordModRole = guild.roles.cache.find(r => r.name === config.roles.discord_mod);
+
+    // =========================
+    // 🎙️ CREAZIONE
+    // =========================
+    const channel = await guild.channels.create({
+      name: channelName,
+      type: ChannelType.GuildVoice,
+      parent: category.id,
+      permissionOverwrites: type === "live" ? [
+        {
+          id: guild.roles.everyone.id,
+          deny: [PermissionsBitField.Flags.Connect]
+        },
+        {
+          id: member.id,
+          allow: [
+            PermissionsBitField.Flags.Connect,
+            PermissionsBitField.Flags.ManageChannels,
+            PermissionsBitField.Flags.MoveMembers
+          ]
+        },
+        ...(streamerRole ? [{ id: streamerRole.id, allow: [PermissionsBitField.Flags.Connect] }] : []),
+        ...(streamerModRole ? [{ id: streamerModRole.id, allow: [PermissionsBitField.Flags.Connect] }] : []),
+        ...(discordModRole ? [{ id: discordModRole.id, allow: [PermissionsBitField.Flags.Connect] }] : [])
+      ] : [
+        {
+          id: guild.roles.everyone.id,
+          allow: [PermissionsBitField.Flags.Connect]
+        },
+        {
+          id: member.id,
+          allow: [
+            PermissionsBitField.Flags.Connect,
+            PermissionsBitField.Flags.ManageChannels,
+            PermissionsBitField.Flags.MoveMembers
+          ]
+        }
       ]
-    },
-    ...(streamerRole ? [{
-      id: streamerRole.id,
-      allow: [PermissionsBitField.Flags.Connect]
-    }] : []),
-    ...(streamerModRole ? [{
-      id: streamerModRole.id,
-      allow: [PermissionsBitField.Flags.Connect]
-    }] : []),
-    ...(discordModRole ? [{
-      id: discordModRole.id,
-      allow: [PermissionsBitField.Flags.Connect]
-    }] : [])
-  ] : [
-    {
-      id: guild.roles.everyone.id,
-      allow: [PermissionsBitField.Flags.Connect]
-    },
-    {
-      id: member.id,
-      allow: [
-        PermissionsBitField.Flags.Connect,
-        PermissionsBitField.Flags.ManageChannels,
-        PermissionsBitField.Flags.MoveMembers
-      ]
-    }
-  ]
-});
+    });
 
-// 👑 salva owner + tipo
-voiceOwners.set(channel.id, member.id);
-voiceTypes.set(channel.id, type);
+    // =========================
+    // 💾 SALVATAGGIO
+    // =========================
+    voiceOwners.set(channel.id, member.id);
+    voiceTypes.set(channel.id, type);
 
-// 👥 limiti utenti dinamici
-if (type === "live") {
-  await channel.setUserLimit(config.settings.liveUserLimit);
-}
+    // =========================
+    // 👥 LIMITI
+    // =========================
+    if (type === "live") await channel.setUserLimit(config.settings.liveUserLimit);
+    if (type === "private") await channel.setUserLimit(config.settings.privateUserLimit);
+    if (type === "public") await channel.setUserLimit(config.settings.publicUserLimit);
 
-if (type === "private") {
-  await channel.setUserLimit(config.settings.privateUserLimit);
-}
-
-if (type === "public") {
-  await channel.setUserLimit(config.settings.publicUserLimit);
-}
-
-// 🚀 sposta utente
-await member.voice.setChannel(channel);
+    // =========================
+    // 🚀 SPOSTA UTENTE
+    // =========================
+    await member.voice.setChannel(channel);
 
   } catch (error) {
     console.error("Errore voiceStateUpdate:", error);

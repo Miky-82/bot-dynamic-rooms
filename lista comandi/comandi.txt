@@ -1,0 +1,11 @@
+npm install
+node index.js
+
+
+Comandi_Git
+
+git init
+git add .
+git commit -m "release: voice bot base"
+git branch -M main
+git push -u origin main

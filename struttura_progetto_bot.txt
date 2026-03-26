@@ -1,0 +1,11 @@
+bot/
+│── commands/
+│   └── voice.js
+│
+│── events/
+│   └── voiceStateUpdate.js
+│
+│── config.json
+│── index.js
+│── package.json
+│── README.md
